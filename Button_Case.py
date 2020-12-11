@@ -8,6 +8,15 @@ class Button():
         self.model_name = ''
         self.sub_model_name = ''
         self.function_name = button_name
+        self.priority = ''
+        self.is_access = '否'
+        self.is_auto = '否'
+        self.relative_need = ''
+        self.version = ''
+        self.author = ''
+        self.image = ''
+        self.test_result = ''
+        self.remarks = ''
         self.case = dict()
         self.case[button_name + "单击"] = ["单击%s后，响应正常，结果显示正确。"%button_name, '单击按钮']
         self.case[button_name + "双击"] = ["双击%s后，响应正常，结果显示正确。"%button_name, '双击按钮']
@@ -20,6 +29,8 @@ class Button():
         return (not self.__eq__(other))
     def __hash__(self):
         return  hash(self.function_name)
+    def add_must_need_case(self,is_need=''):
+        pass
     def add_case(self,case_name,case_pre='',case_step=''):
         self.case[case_name] = [case_pre,case_step]
     def set_precondition(self,precondition):

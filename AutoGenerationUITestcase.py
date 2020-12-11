@@ -7,6 +7,130 @@ import re
 from selenium import webdriver
 import Input_Case,Button_Case
 from SaveCaseToExcel import SaveCaseToExcel
+class Input():
+    def __init__(self,element):
+        self.input = element
+        self.input_type = None
+        self.input_statue = None
+        self.input_selects = []
+
+    def get_label(self):
+        type = self.input_type if self.input_type else self.get_type()
+        label = None
+        if type == 1:
+            label = self.input.find_elements_by_xpath('../../preceding-sibling::label')
+            end = "文本框"
+        elif type ==2:
+            label = self.input.find_elements_by_xpath('../../../preceding-sibling::label')
+            end = "单下拉选框"
+        elif type ==31 or type ==32:
+            label = self.input.find_elements_by_xpath('../../../preceding-sibling::label')
+            end = "多下拉选框"
+        elif type == 4:
+            label = self.input.find_elements_by_xpath('../../../preceding-sibling::label')
+            end = "数字框"
+        elif type == 5:
+            label = self.input.find_elements_by_xpath('../../../preceding-sibling::label')
+            end = "复选框"
+        elif type == 6:
+            label = self.input.find_elements_by_xpath('../../../preceding-sibling::label')
+            end = "单选框"
+        else:
+            print ("未处理类型",type)
+        if label:
+            print (label[0].text,type)
+            return (label[0].text+end)
+        else:
+            return None
+
+    def get_attribute(self, name):
+        try:
+            a = self.input.get_attribute(name)
+        except Exception:
+            print ("没有找到属性",name)
+            a = None
+        return a
+
+    def get_type(self):
+        if self.input_type:
+            return self.input_type
+        tp = self.get_attribute('type')
+        disabled = self.get_attribute('disabled')
+        if (tp == "text"or tp == "number") and disabled != "true":
+            x = self.input.find_elements_by_xpath('./following-sibling::span')
+            if x:#可能是单选框或者多选框
+                y = self.input.find_elements_by_xpath('../../span')
+                if y.__len__() > 1:#多选
+                    self.input_statue = self.input.find_elements_by_xpath('..//i')
+                    if input_statue:#多选框的选择框
+                        self.input_type = 31
+                    else:#多选框的显示框
+                        self.input_type = 32
+                else:#单选
+                    self.input_type = 2
+            else:#没有的话有可能是纯文本或者数字选择框
+                y = self.input.find_elements_by_xpath('./../../span')
+                if y:#数字选择框
+                    self.input_type = 4
+                else:#纯文本框
+                    j = self.input.find_elements_by_xpath('../input')
+                    if j.__len__()>1: #区间选择
+                        self.input_type = 11
+                    else:
+                        self.input_type = 1
+        elif tp=="checkbox" and disabled != "true":
+            self.input_type =5
+        elif tp == "radio"and disabled != "true":
+            self.input_type = 6
+        else:
+            self.input_type = tp
+        return self.input_type
+
+    def get_selects(self):
+        type = self.input_type if self.input_type else self.get_type()
+        if type == 2 or type == 31:
+            i_s = self.input_statue if self.input_statue else self.input.find_elements_by_xpath('..//i')
+            if "is-reverse" not in i_s[0].get_attribute("class"):
+                try:
+                    self.input.click()
+                except Exception:
+                    self.driver.execute_script("arguments[0].click();", i)
+                time.sleep(1)
+            divs = self.driver.find_elements_by_xpath('//div[@x-placement="bottom-start" or @x-placement="up-start"]')
+            if divs.__len__() > 0:
+                lis = divs[0].find_elements_by_tag_name("li")
+                for li in lis:
+                    self.input_selects.append(li.text)
+            try:
+                self.input.click()
+            except Exception:
+                self.driver.execute_script("arguments[0].click();", i)
+            return self.input_selects
+        return self.input_selects
+
+    def get_case(self):
+        gl = self.get_label()
+        if gl:
+            gt = self.get_type()
+            if gt == 1:
+                return Input_Case.Input_Text(gl)
+            elif gt == 2:
+                return Input_Case.Input_Select(gl)
+            elif gt == 31:
+                return Input_Case.Input_Select(gl)
+            elif gt == 4:
+                return Input_Case.Input_Number(gl)
+            elif gt == 5:
+                return Input_Case.Input_Checkbox(gl)
+            elif gt == 6:
+                return Input_Case.Input_Radio(gl)
+            elif gt == 11:
+                return Input_Case.Input_Date("日期")
+            else:
+                return None
+        else:
+            return None
+
 class Operation_Platform():
     def __init__(self,url='http://duop.imgo.tv/#/login'):
         self.driver = webdriver.Chrome('C:\Program Files (x86)\Google\Chrome\Application\chromedriver.exe')
@@ -49,100 +173,22 @@ class Operation_Platform():
             else:
                 wb.click()
 
-    def find_all_selects(self):
-        name_list = []
-        divs = self.driver.find_elements_by_xpath('//div[@x-placement="bottom-start" or @x-placement="up-start"]')
-        if divs.__len__()>0:
-            lis = divs[0].find_elements_by_tag_name("li")
-            for li in lis:
-                name_list.append(li.text)
-        return name_list
-
     def find_all_inputs(self,element='',precondition=''):
         inputs = element.find_elements_by_tag_name("input") if element != '' else self.driver.find_elements_by_tag_name("input")
-        case = ''
         for i in inputs:
-            type=''
-            placeholder=''
-            disabled = ''
-            try:
-                type = i.get_attribute("type")
-            except Exception as e:
-                type=''
-            try:
-                disabled = i.get_attribute("disabled")
-            except Exception:
-                disabled = ''
-            try:
-                placeholder = i.get_attribute("placeholder")
-            except Exception as e:
-                #没有placeholder属性
-                placeholder="请选择"
-            if (type=="checkbox" or type=="radio") and disabled != "true":
-                label = i.find_elements_by_xpath('../../preceding-sibling::label')
-                if label.__len__() == 1:
-                    case = Input_Case.Input_Checkbox(label[0].text+"复选框") if type == "checkbox" else Input_Case.Input_Radio(label[0].text+"单选框")
-                    case.set_precondition(precondition if precondition != '' else "登陆%s,进入%s" % (
-                    self.patform_name, '->'.join(self.page_name)))
-                    case.set_platform_name("统一运营平台")
-                    case.set_project_name(self.patform_name)
-                    case.set_model_name(self.page_name[0])
-                    case.set_sub_model_name(self.page_name[-1])
-                    case.set_function_name(label[0].text)
-                    self.controls.add(case)
-                # continue
-            elif (type == "text" or type == "number" or type == "textarea") and disabled != "true":
-                if placeholder == "开始日期" or placeholder == "结束日期":
-                    case = case or Input_Case.Input_Date('')
-                    case.set_precondition(precondition if precondition != '' else "登陆%s,进入%s"%(self.patform_name, '->'.join(self.page_name)))
-                    case.set_platform_name("统一运营平台")
-                    case.set_project_name(self.patform_name)
-                    case.set_model_name(self.page_name[0])
-                    case.set_sub_model_name(self.page_name[-1])
-                    case.set_function_name("日期")
-                    self.controls.add(case)
-                else:
-                    span_number = i.find_elements_by_xpath('./../span') #+ i.find_elements_by_xpath('preceding-sibling::span')
-                    label = []
-                    end_name = ''
-                    if span_number:#下拉框
-                        label = i.find_elements_by_xpath('../../../preceding-sibling::label')
-                        end_name = "下拉框"
-                        # 是否展开下拉框，没有展开要先点击下
-                        i_s = span_number[0].find_elements_by_tag_name('i')
-                        if i_s:
-                            if "is-reverse" not in i_s[0].get_attribute("class"):
-                                try:
-                                    i.click()
-                                except Exception:
-                                    self.driver.execute_script("arguments[0].click();",i)
-                                time.sleep(1)
-                            try:
-                                i.click()
-                            except Exception:
-                                self.driver.execute_script("arguments[0].click();", i)
-                        else:
-                            print ("没找到下拉框：",label[0].text)
-                        # selected_elements = self.find_all_selects()
-                        # self.driver.execute_script("arguments[0].click();",i)
-                        # print (selected_elements)
-                    else:#文本框
-                        label = i.find_elements_by_xpath('../../preceding-sibling::label')
-                        end_name = "文本框"
-                    if label:
-                        if type == "text":
-                            case = ((end_name == "下拉框") and Input_Case.Input_Select(label[0].text+end_name)) or Input_Case.Input_Text(label[0].text+end_name)
-                        elif type == "number":
-                            case = Input_Case.Input_Number(label[0].text+end_name)
-                        case.set_precondition(precondition if precondition != '' else "登陆%s,进入%s" % (self.patform_name, '->'.join(self.page_name)))
-                        case.set_platform_name("统一运营平台")
-                        case.set_project_name(self.patform_name)
-                        case.set_model_name(self.page_name[0])
-                        case.set_sub_model_name(self.page_name[-1])
-                        case.set_function_name(label[0].text)
-                        self.controls.add(case)
+            i = Input(i)
+            case = i.get_case()
+            if case:
+                case.set_precondition(precondition if precondition != '' else "登陆%s,进入%s" % (
+                self.patform_name, '->'.join(self.page_name)))
+                case.set_platform_name("统一运营平台")
+                case.set_project_name(self.patform_name)
+                case.set_model_name(self.page_name[0])
+                case.set_sub_model_name(self.page_name[-1])
+                # case.set_function_name(case.)
+                self.controls.add(case)
             else:
-                print (type,"没有处理")
+                print (i.get_type(),"没有处理")
 
     def find_all_buttons(self,element='',precondition=''):
         #过滤表格中的button
@@ -155,15 +201,19 @@ class Operation_Platform():
                     self.driver.execute_script("arguments[0].click();", bt)
                     time.sleep(1)
                     dialogs = self.driver.find_elements_by_xpath('//div[@role="dialog"]')
-                    # for dialog in dialogs:
-
-                    self.find_all_inputs(dialogs[-1],precondition="登陆%s,进入%s,点击%s"% (self.patform_name, '->'.join(self.page_name), spans[0].text))
+                    if dialogs:
+                        st = dialogs[-1].find_element_by_xpath('../').get_attribute('style')
+                        if "display: none" not in st:
+                            self.find_all_inputs(dialogs[-1],precondition="登陆%s,进入%s,点击%s"% (self.patform_name, '->'.join(self.page_name), spans[0].text))
+                        else:
+                            self.find_all_inputs('', precondition="登陆%s,进入%s,点击%s" % (
+                            self.patform_name, '->'.join(self.page_name), spans[0].text))
                     try:
                         bt = dialogs[-1].find_element_by_xpath('.//button[@aria-label="Close"]')
                         self.driver.execute_script("arguments[0].click();", bt)
                         # dialogs[-1].find_element_by_xpath('//button[@aria-label="Close"]').click()
                     except Exception:
-                        dialogs[-1].find_element_by_xpath('//button/span[text()="取 消"]').click()
+                        dialogs[-1].find_element_by_xpath('.//button/span[text()="取 消"]').click()
                     time.sleep(1)
                 case = Button_Case.Button(spans[0].text+"按钮")
                 case.set_platform_name("统一运营平台")
@@ -183,7 +233,7 @@ if __name__=="__main__":
     op.login('AMP')
     op.switch_page(["素材管理", "广告素材"])
     time.sleep(1)
-    # op.find_all_inputs()
+    op.find_all_inputs()
     op.find_all_buttons()
     s = SaveCaseToExcel()
     s.writeCases(op.all_controls())

@@ -9,10 +9,34 @@ class Input_Base():
         self.model_name = ''
         self.sub_model_name = ''
         self.function_name = input_name
+        self.priority = ''
+        self.is_access = '否'
+        self.is_auto = '否'
+        self.relative_need = ''
         self.version = ''
+        self.author = ''
+        self.image = ''
+        self.test_result = ''
+        self.remarks = ''
         self.case = dict()
         self.case[input_name + "默认值"] = ["输入框有默认值显示默认值，输入框无默认值显示预期值。",'按前置条件']
 
+    def add_must_need_case(self,is_need):
+        if is_need == '是':
+            self.add_case(self.function_name  + "是否必填", "输入框为必填，不填保存提示必填。", '按前置条件')
+        elif is_need == '否':
+            self.add_case(self.function_name  + "是否必填", "输入框为非必填，不填保存成功。", '按前置条件')
+        else:
+            pass
+    def add_limit_value_case(self,limit_value):
+        if ',' in limit_value:
+            v = limit_value.split(',')
+            min = v[0]
+            max = v[-1]
+        else:
+            max = limit_value
+            min = 0
+        self.add_case(self.function_name + "限值", "最大输入字符数为%s,超出截断，最小为%s。", '输入字符到文本框')
     def __eq__(self, other):
         if  isinstance(other, Input_Base):
             return (self.function_name == other.function_name)
@@ -36,10 +60,13 @@ class Input_Base():
         self.sub_model_name = smdName
     def set_function_name(self,ftName):
         self.function_name = ftName
-    def set_function_name(self,version):
+    def set_version(self,version):
         self.version = version
+    def set_relative_need(self,relative):
+        self.relative_need = relative
     def all_cases(self):
         return self.case
+
 class Input_Text(Input_Base):
     def __init__(self,input_name):
         super(Input_Text,self).__init__(input_name)
@@ -48,7 +75,7 @@ class Input_Text(Input_Base):
         self.add_case(input_name + "数字字符", "文本框中可以输入数字字符。", "输入数字字符。（如：-0123.4560）")
         self.add_case(input_name + "特殊字符", "文本框中可以输入特殊字符。", "输入特殊字符。（如：αβγさしすⅠⅡⅢ＋－×÷）")
         self.add_case(input_name + "混合字符", "文本框中可以输入所有字符混合。", "输入混合字符。（如：测试文本框TestText-0123.4560αβγさしすⅠⅡⅢ＋－×÷）")
-        self.add_case(input_name + "字符长度限制", "文本框中输入超过字符长度的信息，消息提醒且无法提交当前页面；或文本框中无法输入超过字符长度的信息。如无限制多少都可以提交。", "输入字符长度超出限制长度，如无限制文本框中输入足够长的信息（如100个字符）")
+        self.add_case(input_name + "字符长度限制", "文本框中输入超过字符长度的字符，消息提醒且无法提交当前页面；或文本框中无法输入超过字符长度的信息。如无限制多少都可以提交。", "输入字符长度超出限制长度，如无限制文本框中输入足够长的信息（如100个字符）")
 
 class Input_Number(Input_Base):
     def __init__(self,input_name):
@@ -70,7 +97,6 @@ class Input_Radio(Input_Base):
         self.add_case(input_name + "勾选", "点击第1个选项时第1个选项被勾选；点击第2个选项时第2个选项被勾选，第1个选项取消勾选。", "点击勾选框")
         self.add_case(input_name + "取消勾选", "可以取消勾选：点击某选项第1次时勾选该选项，第2次时取消勾选。不可以取消勾选：点击某选项第1次时勾选该选项，第2次时无反应。", "双击勾选框")
 
-
 class Input_Checkbox(Input_Base):
     def __init__(self,input_name):
         super(Input_Checkbox,self).__init__(input_name)
@@ -84,6 +110,29 @@ class Input_Select(Input_Base):
         self.add_case(input_name + "随机选取下拉值", "选择下拉框的某选项后，下拉框的值变为选中选项的值。", "随机选择下拉框值")
         self.add_case(input_name + "关联项", "如果有关联项的话，关联项展示正确。", "随机选择下拉框值")
 
+class Input_Selects(Input_Base):
+    #多选择下拉框。
+    def __init__(self,input_name):
+        super(Input_Selects,self).__init__(input_name)
+        self.add_case(input_name + "下拉值内容", "下拉值数量正确。", "点击展开下拉框")
+        self.add_case(input_name + "随机选取多个下拉值", "选择下拉框的某选项后，下拉框的值变为选中选项的值。", "随机选择下拉框值")
+        self.add_case(input_name + "关联项", "如果有关联项的话，关联项展示正确。", "随机选择下拉框值")
+
+class Input_bootstrap_Select(Input_Base):
+    #左右选择框选择数据，左侧是待选择的数据，右侧是已选择的数据，右侧数据可删除。
+    def __init__(self,input_name):
+        super(Input_bootstrap_Select,self).__init__(input_name)
+        self.add_case(input_name + "左侧待选择数据内容是否正确", "与产品设计一致。", "点击展开左侧数据")
+        self.add_case(input_name + "左侧数据为空时是否正常显示", "显示正常，数据为空。", "点击展开左侧数据")
+        self.add_case(input_name + "左侧数据过多时是否正常显示", "显示进度条可以下拉。", "点击展开左侧数据")
+        self.add_case(input_name + "目录是否正确，目录切换时数据是否正确", "目录是否正确，目录切换时数据正确。", "点击展开左侧数据，切换目录")
+        self.add_case(input_name + "左侧查询功能是否正常", "查询结果与输入条件一致。", "输入查询条件，查看结果")
+        self.add_case(input_name + "右侧已选择数据是否与左侧待选择数据一致", "右侧已选择数据与左侧待选择数据一致。", "点击展开左侧数据，选择数据至右侧")
+        self.add_case(input_name + "右侧数据为空时是否正常显示", "显示正常，数据为空。", "点击展开右侧数据")
+        self.add_case(input_name + "右侧数据过多时是否正常显示", "显示进度条可以下拉。", "选择全部数据至右侧")
+        self.add_case(input_name + "是否能从左侧添加数据到右侧", "能从左侧添加数据到右侧。", "选择左侧数据添加至右侧")
+        self.add_case(input_name + "是否能从右侧删除数据", "能从右侧删除数据。", "删除右侧数据")
+        self.add_case(input_name + "是否防止重复添加数据", "可以防止重复添加数据。", "选择左侧数据重复添加至右侧")
 
 class Input_Date(Input_Base):
     def __init__(self,input_name):
