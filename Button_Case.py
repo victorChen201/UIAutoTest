@@ -20,7 +20,7 @@ class Button():
         # self.remarks = ''
         self.case = dict()
         self.add_case(button_name + "单击", "单击%s后，响应正常，结果显示正确。"%button_name, '单击按钮')
-        self.add_case(button_name + "双击", "双击%s后，响应正常，结果显示正确。"%button_name, '双击按钮','P2')
+        # self.add_case(button_name + "双击", "双击%s后，响应正常，结果显示正确。"%button_name, '双击按钮','P2')
     def __eq__(self, other):
         if  isinstance(other, Button):
             return (self.function_name == other.function_name)

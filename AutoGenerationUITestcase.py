@@ -13,7 +13,6 @@ class Input():
         self.input_type = None
         self.input_statue = None
         self.input_selects = []
-
     def get_label(self):
         type = self.input_type if self.input_type else self.get_type()
         label = None
@@ -35,6 +34,9 @@ class Input():
         elif type == 6:
             label = self.input.find_elements_by_xpath('../../../preceding-sibling::label')
             end = "单选框"
+        elif type == 11:
+            label = self.input.find_elements_by_xpath('../../preceding-sibling::label')
+            end = ""
         else:
             print ("未处理类型",type)
         if label:
@@ -42,7 +44,6 @@ class Input():
             return (label[0].text+end)
         else:
             return None
-
     def get_attribute(self, name):
         try:
             a = self.input.get_attribute(name)
@@ -50,7 +51,6 @@ class Input():
             print ("没有找到属性",name)
             a = None
         return a
-
     def get_type(self):
         if self.input_type:
             return self.input_type
@@ -85,29 +85,6 @@ class Input():
         else:
             self.input_type = tp
         return self.input_type
-
-    def get_selects(self):
-        type = self.input_type if self.input_type else self.get_type()
-        if type == 2 or type == 31:
-            i_s = self.input_statue if self.input_statue else self.input.find_elements_by_xpath('..//i')
-            if "is-reverse" not in i_s[0].get_attribute("class"):
-                try:
-                    self.input.click()
-                except Exception:
-                    self.driver.execute_script("arguments[0].click();", i)
-                time.sleep(1)
-            divs = self.driver.find_elements_by_xpath('//div[@x-placement="bottom-start" or @x-placement="up-start"]')
-            if divs.__len__() > 0:
-                lis = divs[0].find_elements_by_tag_name("li")
-                for li in lis:
-                    self.input_selects.append(li.text)
-            try:
-                self.input.click()
-            except Exception:
-                self.driver.execute_script("arguments[0].click();", i)
-            return self.input_selects
-        return self.input_selects
-
     def get_case(self):
         gl = self.get_label()
         if gl:
@@ -130,6 +107,28 @@ class Input():
                 return None
         else:
             return None
+    def get_selects(self):
+        type = self.input_type if self.input_type else self.get_type()
+        if type == 2 or type == 31:
+            i_s = self.input_statue if self.input_statue else self.input.find_elements_by_xpath('..//i')
+            if "is-reverse" not in i_s[0].get_attribute("class"):
+                try:
+                    self.input.click()
+                except Exception:
+                    self.driver.execute_script("arguments[0].click();", i)
+                time.sleep(1)
+            divs = self.driver.find_elements_by_xpath('//div[@x-placement="bottom-start" or @x-placement="up-start"]')
+            if divs.__len__() > 0:
+                lis = divs[0].find_elements_by_tag_name("li")
+                for li in lis:
+                    self.input_selects.append(li.text)
+            try:
+                self.input.click()
+            except Exception:
+                self.driver.execute_script("arguments[0].click();", i)
+            return self.input_selects
+        return self.input_selects
+
 
 class Operation_Platform():
     def __init__(self,url='http://duop.imgo.tv/#/login'):
@@ -202,7 +201,7 @@ class Operation_Platform():
                     time.sleep(1)
                     dialogs = self.driver.find_elements_by_xpath('//div[@role="dialog"]')
                     if dialogs:
-                        st = dialogs[-1].find_element_by_xpath('../').get_attribute('style')
+                        st = dialogs[-1].find_element_by_xpath('./..').get_attribute('style')
                         if "display: none" not in st:
                             self.find_all_inputs(dialogs[-1],precondition="登陆%s,进入%s,点击%s"% (self.patform_name, '->'.join(self.page_name), spans[0].text))
                         else:
@@ -224,6 +223,71 @@ class Operation_Platform():
                 case.set_precondition(precondition if precondition != '' else "登陆%s,进入%s" % (self.patform_name, '->'.join(self.page_name)))
                 self.controls.add(case)
 
+    def find_table_header_body(self):
+        body = self.driver.find_elements_by_tag_name('tbody')
+        header = self.driver.find_elements_by_tag_name('thead')
+        return header,body
+
+    def click_select(self,value):
+        selects_element = self.driver.find_element_by_xpath('//div[@x-placement="bottom-start" or @x-placement="up-start"]')
+        self.driver.execute_script("arguments[0].click();", selects_element.find_element_by_xpath('.//span[text()="%s"]'%value))
+        time.sleep(1)
+        # self.driver.execute('arguments[0]',selects_element.find_element_by_xpath('.//span[text()="%s"]'%value))
+
+    def input_search_partition(self,label,values,style='text'):
+        label_element = self.driver.find_element_by_xpath('//label[text()="%s"]'%label)
+        input_element = label_element.find_element_by_xpath('following-sibling::div[1]//input')
+        open_flag = False
+        if isinstance(values,list):
+            for v in values:
+                if style == 'text':
+                    input_element.send_keys(v)
+                elif style == 'select':
+                    if not open_flag:
+                        open_flag=True
+                        input_element.click()
+                    self.click_select(v)
+                    time.sleep(1)
+                else:
+                    print ("style","输入错误")
+        else:
+            if style == 'text':
+                input_element.send_keys(values)
+            elif style == 'select':
+                input_element.click()
+                self.click_select(values)
+            else:
+                print ("style", "输入错误")
+
+
+    def search_result(self,label,value):
+        find_numbers = 0
+        header,body = self.find_table_header_body()
+        if body and header:
+            ths = header[0].find_elements_by_tag_name('th')
+            index = None
+            for th in ths:
+                lb = th.find_element_by_tag_name('div').text
+                if lb in label and lb != '':
+                    index = th.get_attribute('class')
+                    break
+            trs = body[0].find_elements_by_tag_name('tr')
+            find_numbers = trs.__len__()
+            print (label,"找到",find_numbers)
+            if index:
+                for tr in trs:
+                    div = tr.find_element_by_xpath('td[contains(@class,"%s")]/div'%index.split(" ")[0])
+                    if isinstance(value,list):
+                        if div.text not in value:
+                            return False
+                    else:
+                        if value not in div.text:
+                            return False
+        if find_numbers == 0:
+            return None
+        else:
+            return True
+
     def all_controls(self):
         return self.controls
 
@@ -233,8 +297,13 @@ if __name__=="__main__":
     op.login('AMP')
     op.switch_page(["素材管理", "广告素材"])
     time.sleep(1)
-    op.find_all_inputs()
-    op.find_all_buttons()
+    op.input_search_partition('创意类型','AI图片','select')
+    op.input_search_partition('名称/ID', '513889', 'text')
+    time.sleep(1)
+    print (op.search_result('名称/ID','513889'))
+    print (op.search_result('创意类型', 'AI图片'))
+    # op.find_all_inputs()
+    # op.find_all_buttons()
     s = SaveCaseToExcel()
     s.writeCases(op.all_controls())
     s.saveCaseToExcel("Testcase.xlsx")

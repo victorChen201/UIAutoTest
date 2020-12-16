@@ -109,6 +109,7 @@ class Input_Select(Input_Base):
         super(Input_Select,self).__init__(input_name,is_need)
         self.add_case(input_name + "下拉值内容", "下拉值数量正确。", "点击展开下拉框")
         self.add_case(input_name + "随机选取下拉值", "选择下拉框的某选项后，下拉框的值变为选中选项的值。", "随机选择下拉框值")
+        self.add_case(input_name + "取消选中下拉值", "下拉框的选中选项被取消。", "取消选择下拉框值")
         self.add_case(input_name + "关联项", "如果有关联项的话，关联项展示正确。", "随机选择下拉框值")
 
 class Input_Selects(Input_Base):
@@ -117,6 +118,7 @@ class Input_Selects(Input_Base):
         super(Input_Selects,self).__init__(input_name)
         self.add_case(input_name + "下拉值内容", "下拉值数量正确。", "点击展开下拉框")
         self.add_case(input_name + "随机选取多个下拉值", "选择下拉框的某选项后，下拉框的值变为选中选项的值。", "随机选择下拉框值")
+        self.add_case(input_name + "取消选中下拉值", "下拉框的选中选项被取消。", "取消选择下拉框值")
         self.add_case(input_name + "关联项", "如果有关联项的话，关联项展示正确。", "随机选择下拉框值")
 
 class Input_bootstrap_Select(Input_Base):
@@ -142,4 +144,4 @@ class Input_Date(Input_Base):
         self.add_case(input_name + "日期自动选择", "根据实际规则，进行会让日期自动选择的操作，日期框自动填入日期。（如【申请日期】选择一个日期，【提交日期】也自动选择相同的日期）。", "点击选择近一周/一个月等")
         self.add_case(input_name + "日期输入", "如果支持手动输入则日期框中输入正确格式的信息，日期框变为输入的日期，可以提交当前页面。日期框中输入错误格式的信息（如：测试日期框），消息提醒且无法提交当前页面，否则输入无效。", "手动输入日期")
         self.add_case(input_name + "日期范围", "日期框中输入日期范围内的日期，日期框变为输入的日期，可以提交当前页面。日期框中输入日期范围外的日期，消息提醒且无法提交当前页面。", "点击选择一段日期")
-        # self.add_case(input_name + "日期判断", "根据实际规则，输入符合日期判断规则的日期，日期框变为输入的日期，可以提交当前页面。（如【开始日期】小于等于【结束日期】）。根据实际规则，输入不符合日期判断规则的日期，消息提醒且无法提交当前页面。（如【开始日期】大于【结束日期】）。", "")
+        self.add_case(input_name + "日期判断", "根据实际规则，输入符合日期判断规则的日期，日期框变为输入的日期，可以提交当前页面。（如【开始日期】小于等于【结束日期】）。根据实际规则，输入不符合日期判断规则的日期，消息提醒且无法提交当前页面。（如【开始日期】大于【结束日期】）。", "")
