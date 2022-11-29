@@ -150,8 +150,8 @@ class Operation_Platform():
         if need_login.__len__()==0:
             print ("不需要登陆")
             return
-        self.driver.find_element_by_xpath('//input[@placeholder="请输入OA邮箱"]').send_keys('shuangsheng')
-        self.driver.find_element_by_xpath('//input[@placeholder="请输入密码"]').send_keys('Css861007/')
+        self.driver.find_element_by_xpath('//input[@placeholder="请输入OA邮箱"]').send_keys('')
+        self.driver.find_element_by_xpath('//input[@placeholder="请输入密码"]').send_keys('')
         self.driver.find_element_by_xpath('//span[text()="登 录"]').click()
         self.driver.set_page_load_timeout(3)
         self.driver.find_element_by_xpath('//div[text()="%s"]/preceding-sibling::div[2]' % patform_name).click()
