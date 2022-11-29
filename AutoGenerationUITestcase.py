@@ -131,7 +131,7 @@ class Input():
 
 
 class Operation_Platform():
-    def __init__(self,url='http://duop.imgo.tv/#/login'):
+    def __init__(self,url='oa地址'):
         self.driver = webdriver.Chrome('C:\Program Files (x86)\Google\Chrome\Application\chromedriver.exe')
         self.driver.implicitly_wait(2)
         self.driver.maximize_window()
@@ -292,7 +292,7 @@ class Operation_Platform():
         return self.controls
 
 if __name__=="__main__":
-    target = "http://test-admin.da.imgo.tv/adx/creative/pre"
+    target = "amp测试地址"
     op = Operation_Platform()
     op.login('AMP')
     op.switch_page(["素材管理", "广告素材"])
